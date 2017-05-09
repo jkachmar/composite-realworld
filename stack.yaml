@@ -1,0 +1,18 @@
+resolver: lts-8.13
+
+packages:
+- '.'
+
+extra-deps:
+  - composite-aeson-0.4.1.0
+  - composite-base-0.4.1.0
+  - composite-opaleye-0.4.1.0
+  - refurb-0.2.2.0
+  - servant-auth-0.2.7.0
+  - servant-auth-server-0.2.7.0
+  - servant-0.10
+  - servant-server-0.10
+
+flags: {}
+
+extra-package-dbs: []

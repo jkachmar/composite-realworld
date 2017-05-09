@@ -1,0 +1,100 @@
+-- This file has been generated from package.yaml by hpack version 0.17.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:                composite-realworld
+version:             0.0.0.1
+synopsis:            RealWorld backend using Servant and Composite
+description:         Backend implementation of the RealWorld project with Servant and Composite
+homepage:            https://github.com/jkachmar/composite-realworld
+license:             MIT
+license-file:        LICENSE
+author:              jkachmar
+copyright:           2017 Joe Kachmar
+category:            Web
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  default-language: Haskell2010
+  ghc-options: -Wall -Werror
+  hs-source-dirs:
+      src
+  default-extensions: NoImplicitPrelude OverloadedStrings
+  exposed-modules:
+      Api
+      Api.Articles
+      Api.Auth
+      Api.Login
+      Api.Profiles
+      Api.Tags
+      Api.User
+      Api.Users
+      App
+      Foundation
+      Logger
+      Types.Api
+      Types.Model
+  build-depends:
+      aeson               >= 1.0  && < 1.1
+    , base                >= 4.7  && < 5
+    , bytestring          >= 0.10 && < 0.11
+    , composite-aeson
+    , composite-base
+    , composite-opaleye
+    , classy-prelude      >= 1.2  && < 1.3
+    , errors              >= 2.1  && < 2.2
+    , fast-logger         >= 2.4  && < 2.5
+    , lens                >= 4.15 && < 4.16
+    , monad-logger        >= 0.3  && < 0.4
+    , mtl                 >= 2.2  && < 2.3
+    , opaleye             >= 0.5  && < 0.6
+    , postgresql-simple   >= 0.5  && < 0.6
+    , product-profunctors >= 0.7  && < 0.8
+    , profunctors         >= 5.2  && < 5.3
+    , resource-pool       >= 0.2  && < 0.3
+    , servant
+    , servant-auth
+    , servant-auth-server
+    , servant-server
+    , transformers        >= 0.5  && < 0.6
+    , time                >= 1.6  && < 1.7
+    , wai                 >= 3.2  && < 3.3
+    , wai-extra           >= 3.0  && < 3.1
+    , warp                >= 3.2  && < 3.3
+
+executable composite-realworld-refurb
+  main-is: Main.hs
+  hs-source-dirs:
+      migrations
+  default-extensions: NoImplicitPrelude OverloadedStrings
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson               >= 1.0  && < 1.1
+    , base                >= 4.7  && < 5
+    , bytestring          >= 0.10 && < 0.11
+    , composite-aeson
+    , composite-base
+    , composite-opaleye
+    , classy-prelude      >= 1.2  && < 1.3
+    , errors              >= 2.1  && < 2.2
+    , fast-logger         >= 2.4  && < 2.5
+    , lens                >= 4.15 && < 4.16
+    , monad-logger        >= 0.3  && < 0.4
+    , mtl                 >= 2.2  && < 2.3
+    , opaleye             >= 0.5  && < 0.6
+    , postgresql-simple   >= 0.5  && < 0.6
+    , product-profunctors >= 0.7  && < 0.8
+    , profunctors         >= 5.2  && < 5.3
+    , resource-pool       >= 0.2  && < 0.3
+    , servant
+    , servant-auth
+    , servant-auth-server
+    , servant-server
+    , transformers        >= 0.5  && < 0.6
+    , time                >= 1.6  && < 1.7
+    , wai                 >= 3.2  && < 3.3
+    , wai-extra           >= 3.0  && < 3.1
+    , warp                >= 3.2  && < 3.3
+    , refurb
+  default-language: Haskell2010
