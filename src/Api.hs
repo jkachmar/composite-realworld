@@ -12,7 +12,7 @@ import           Servant              ((:>), Get, JSON, ServerT)
 
 --------------------------------------------------------------------------------
 
-type API = "root" :> Get '[JSON] ()
+type API = "api" :> Get '[JSON] ()
 
 api :: Proxy API
 api = Proxy

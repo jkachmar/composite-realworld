@@ -27,7 +27,7 @@ import           Logger                     (LogFunction, withLogger,
 -- | Initialize the application and serve the API.
 startApp :: IO ()
 startApp = do
-  port    <- lookupSetting "PORT" 8080
+  port    <- lookupSetting "APP_PORT" 8080
   connStr <- getConnStr
   let nConns = 5
   withLogger $ do
