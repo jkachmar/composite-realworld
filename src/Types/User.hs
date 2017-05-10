@@ -122,7 +122,7 @@ makeRecJsonWrapper "UserApiUpdJson" ''UserApiUpdRec
 makeWrapped ''UserApiUpdJson
 
 -- | @Composite@ record of a 'User' response.
-type UserRespRec =
+type UserApiRespRec =
   '[ FUserEmail
    , FUserToken
    , FUserName
@@ -130,8 +130,8 @@ type UserRespRec =
    , FUserImageMay
    ]
 
-makeRecJsonWrapper "UserRespJson" ''UserRespRec
-makeWrapped ''UserRespJson
+makeRecJsonWrapper "UserApiRespJson" ''UserApiRespRec
+makeWrapped ''UserApiRespJson
 
 --------------------------------------------------------------------------------
 

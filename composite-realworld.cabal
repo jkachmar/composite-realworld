@@ -24,7 +24,6 @@ library
   exposed-modules:
       Api
       Api.Articles
-      Api.Login
       Api.Profiles
       Api.Tags
       Api.User
