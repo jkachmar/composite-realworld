@@ -6,15 +6,20 @@
 module App where
 
 import           ClassyPrelude              hiding (Handler, keys)
+import           Configuration.Dotenv       (loadFile)
 import           Control.Monad.Logger       (askLoggerIO, logInfo)
-import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Maybe  (MaybeT (MaybeT), runMaybeT)
+import           Crypto.JOSE.JWK
 import qualified Data.ByteString.Char8      as BS
 import           Data.Pool                  (Pool)
 import qualified Data.Pool                  as Pool
+import           Data.X509                  (PrivKey (PrivKeyRSA, PrivKeyDSA))
+import           Data.X509.File             (readKeyFile)
 import           Database.PostgreSQL.Simple (Connection, close,
                                              connectPostgreSQL)
 import           Network.Wai.Handler.Warp   (run)
 import           Servant                    ((:~>) (NT), Handler, enter, serve)
+import           Servant.Auth.Server        (defaultJWTSettings)
 import           System.Environment         (lookupEnv)
 
 import           Api                        (api, server)
@@ -27,17 +32,42 @@ import           Logger                     (LogFunction, withLogger,
 -- | Initialize the application and serve the API.
 startApp :: IO ()
 startApp = do
-  port    <- lookupSetting "APP_PORT" 8080
+  loadFile False ".env"
+  -- Load settings from a ".env" file, if present; do not override existing env vars
+
+  port <- lookupSetting "APP_PORT" 8080
+  -- Get the specified application port, default to 8080 if "APP_PORT" not present
+
   connStr <- getConnStr
-  let nConns = 5
+  -- Build a connection string from env vars, throw IO failure if env vars not present
+
+  nConns <- lookupSetting "DB_CONNS" 5
+  -- Get the specified number of DB connections, default to 5 if "DB_CONNS" not present
+
+  rsaKey <- lookupSetting "RSA_KEY" (throwIO $ userError "'KEYPATH' environment variable not set!")
+  jwk <- mkJWK rsaKey
+  let jwtCfg = defaultJWTSettings jwk
+  -- Generate @JWTSettings@ from an RSA private keyfile
+
   withLogger $ do
     withDbConnPool connStr nConns $ \ connPool -> do
-      let config = Config connPool
+      let config = Config connPool jwtCfg
       logFn <- askLoggerIO
       $logInfo $ "Starting server on port " <> tshow port
       liftIO . run port . serve api $ enter (appStackToHandler config logFn) server
 
 --------------------------------------------------------------------------------
+
+-- | Creates a JSON Web Key from the first RSA key in the keyfile at the given
+-- @FilePath@; throws an IO error if no key is present or the first key in the
+-- keyfile is a DSA key.
+mkJWK :: FilePath -> IO JWK
+mkJWK keypath = do
+  maybePk <- readKeyFile keypath
+  case (headMay maybePk) of
+    Nothing -> throwIO $ userError $ "No valid keys present at [" <> show keypath <> "]"
+    Just (PrivKeyDSA _) -> throwIO $ userError $ "Invalid key (DSA) present in [" <> show keypath <> "]"
+    Just (PrivKeyRSA pk) -> pure $ fromRSA pk
 
 -- | Looks up an environment variable, given a default to fall back to, and
 -- `read`s that variable into an inferred type.
@@ -104,5 +134,5 @@ getConnStr = do
     envVars <- traverse (MaybeT . lookupEnv) envs
     pure . ConnStr . mconcat . zipWith (<>) keys $ BS.pack <$> envVars
   case connStr of
-    Nothing -> throwIO (userError "Database configuration not present in environment!")
+    Nothing -> throwIO $ userError $ "Database configuration not present in environment!"
     Just str -> pure str

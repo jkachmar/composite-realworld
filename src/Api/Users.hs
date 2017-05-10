@@ -8,14 +8,14 @@ import           ClassyPrelude
 import           Servant
 import           Servant.Auth.Server
 
-import           Foundation                          (AppStackM)
-import           Types.Auth
-import           Types.User                          (UserApiLoginJson,
-                                                      UserApiRegJson,
-                                                      UserApiRespJson)
+import           Foundation          (AppStackM)
+import           Types.Auth          (UserId)
+import           Types.User          (UserApiLoginJson, UserApiRegJson,
+                                      UserApiRespJson)
+
+-- n.b. I don't really know the accepted style to write Servant types ¯\_(ツ)_/¯
 
 -- | Servant type-level representation of the "users" route fragment
--- n.b. There's really no idiomatic way to write these types ¯\_(ツ)_/¯
 type UsersAPI auths = (Auth auths UserId :> ProtectedAPI) :<|> UnprotectedAPI
 
 usersServer :: ServerT (UsersAPI auths) AppStackM
@@ -32,7 +32,7 @@ type ProtectedAPI =
 -- | Endpoint dispatcher for protected routes, handles authentication.
 protected :: AuthResult UserId -> ServerT ProtectedAPI AppStackM
 protected (Authenticated _) = register
-protected _ = throwAll err401
+protected _                 = throwAll err401
 
 -- | Registration endpoint, protected by the authentication handlier.
 register :: UserApiRegJson -> AppStackM UserApiRespJson

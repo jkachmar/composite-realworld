@@ -2,25 +2,25 @@
 
 module Foundation where
 
-import           ClassyPrelude                        hiding (Handler)
-import           Control.Monad.Logger                 (LoggingT)
-import           Data.Pool                            (Pool, withResource)
-import           Database.PostgreSQL.Simple           (Connection, withTransaction)
-import           Servant                              (Handler)
-
---------------------------------------------------------------------------------
+import           ClassyPrelude              hiding (Handler)
+import           Control.Monad.Logger       (LoggingT)
+import           Data.Pool                  (Pool, withResource)
+import           Database.PostgreSQL.Simple (Connection, withTransaction)
+import           Servant                    (Handler)
+import           Servant.Auth.Server        (JWTSettings)
 
 -- | An alias for the monadic context in which all requests are handled;
 -- @LoggingT@ provides access to the logging context, and @ReaderT Config@
 -- provides access the @Config@ record.
 type AppStackM = ReaderT Config (LoggingT Handler)
 
--- | A record containing the application's configuration information (n.b.
--- for now, this only contains our database connection pool).
-newtype Config
+-- | A record containing the application's configuration information (n.b. for
+-- now, this only contains our database connection pool, and JWT settings).
+data Config
   = Config
   { getPool :: Pool Connection
-  } deriving Show
+  , getJWT  :: JWTSettings
+  }
 
 --------------------------------------------------------------------------------
 
