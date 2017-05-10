@@ -10,17 +10,17 @@ import           Servant.Auth.Server (FromJWT, ToJWT)
 
 -------------------------------------------------------------------------------
 
-newtype Token = Token { token :: UUID } deriving (Eq, Read, Show)
+newtype UserId = UserId { userId :: UUID } deriving (Eq, Read, Show)
 
-instance FromJSON Token where
+instance FromJSON UserId where
   parseJSON = withObject "user authentication JWT" $ \o -> do
-     maybeTok <- o .: "token"
-     case (fromText maybeTok) of
-       Nothing  -> fail $ "unable to parse field [" <> unpack maybeTok <> "] int"
-       Just tok -> pure . Token $ tok
+     maybeUid <- o .: "user_id"
+     case (fromText maybeUid) of
+       Nothing  -> fail $ "unable to parse field [" <> unpack maybeUid <> "] int"
+       Just uId -> pure . UserId $ uId
 
-instance ToJSON Token where
-  toJSON (Token tok) = object [ "token" .= (toText tok) ]
+instance ToJSON UserId where
+  toJSON (UserId uId) = object [ "user_id" .= (toText uId) ]
 
-instance FromJWT Token
-instance ToJWT   Token
+instance FromJWT UserId
+instance ToJWT   UserId
