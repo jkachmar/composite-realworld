@@ -14,32 +14,16 @@ import           Control.Lens.TH    (makeWrapped)
 import           Data.UUID          (UUID)
 
 import           Composite          ((:->), Record)
-import           Composite.TH       (withOpticsAndProxies)
 import           Composite.Aeson.TH (makeRecJsonWrapper)
 import           Composite.Opaleye  (defaultRecTable)
+import           Composite.TH       (withOpticsAndProxies)
 
-import           Opaleye            (Column, Nullable, PGInt8, PGText,
-                                     PGTimestamptz, PGUuid, QueryArr,
-                                     Table (Table), queryTable)
+import           Opaleye            (Column, Nullable, PGInt8, PGText, PGUuid,
+                                     QueryArr, Table (Table), queryTable)
 
---------------------------------------------------------------------------------
-
--- | Record creation and update timestamp definitions, types prefixed by 'F'
--- denote native Haskell representations, types prefixed by 'C' denote
--- PostgreSQL representations
-withOpticsAndProxies [d|
-  type FCreatedAt    = "created_at" :-> UTCTime
-  type CCreatedAt    = "created_at" :-> Column PGTimestamptz
-  type FCreatedAtMay = "created_at" :-> Maybe UTCTime
-  type CCreatedAtMay = "created_at" :-> Maybe (Column PGTimestamptz)
-  -- ^ Record creation timestamp.
-
-  type FUpdatedAt    = "updated_at" :-> UTCTime
-  type CUpdatedAt    = "updated_at" :-> Column PGTimestamptz
-  type FUpdatedAtMay = "updated_at" :-> Maybe UTCTime
-  type CUpdatedAtMay = "updated_at" :-> Maybe (Column PGTimestamptz)
-  -- ^ Record update timestamp.
-  |]
+import           Types.Common       (CCreatedAt, CCreatedAtMay, CUpdatedAt,
+                                     CUpdatedAtMay, FCreatedAt, FCreatedAtMay,
+                                     FUpdatedAt, FUpdatedAtMay)
 
 --------------------------------------------------------------------------------
 
