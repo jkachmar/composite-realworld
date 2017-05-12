@@ -6,7 +6,6 @@
 module App where
 
 import           ClassyPrelude              hiding (Handler, keys)
-import           Configuration.Dotenv       (loadFile)
 import           Control.Monad.Logger       (askLoggerIO, logInfo)
 import           Control.Monad.Trans.Maybe  (MaybeT (MaybeT), runMaybeT)
 import           Crypto.JOSE.JWK
@@ -34,9 +33,6 @@ import           Logger                     (LogFunction, withLogger,
 -- | Initialize the application and serve the API.
 startApp :: IO ()
 startApp = do
-  loadFile False ".env"
-  -- Load settings from a ".env" file, if present; do not override existing env vars
-
   env <- lookupSetting "ENV" DEV
 
   port <- lookupSetting "APP_PORT" 8080

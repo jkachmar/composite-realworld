@@ -21,7 +21,6 @@ dependencies:
   - composite-base      # version pinned by stack.yaml
   - composite-opaleye   # version pinned by stack.yaml
   - cryptonite          # version pinned by stack.yaml
-  - dotenv              >= 0.3  && < 0.4
   - errors              >= 2.1  && < 2.2
   - fast-logger         >= 2.4  && < 2.5
   - jose                >= 0.5  && < 0.6
@@ -52,19 +51,20 @@ ghc-options:
   - -Werror
 
 executables:
-  composite-realworld-exe:
-    source-dirs:      app
-    main:             Main.hs
-    ghc-options:      -threaded -rtsopts -with-rtsopts=-N
-    dependencies:
-      - composite-realworld
-executables:
   composite-realworld-refurb:
     source-dirs:      migrations
     main:             Main.hs
     ghc-options:      -threaded -rtsopts -with-rtsopts=-N
     dependencies:
       - refurb # version defined in stack.yaml
+
+executables:
+  composite-realworld-exe:
+    source-dirs:      app
+    main:             Main.hs
+    ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+    dependencies:
+      - composite-realworld
 
 library:
   source-dirs:        src

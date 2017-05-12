@@ -36,14 +36,14 @@ protected _                 = throwAll err401
 
 -- | Registration endpoint, protected by the authentication handlier.
 register :: UserApiRegJson -> AppStackM UserApiRespJson
-register = undefined
+register = error "Route not implemented"
 
 --------------------------------------------------------------------------------
 
 -- | Type alias for the login response with a secure cookie
-type UserApiRespJsonAndCookie = Headers '[ Header "Set-Cookie" SetCookie
-                                         , Header "Set-Cookie" SetCookie
-                                         ] UserApiRespJson
+type UserApiRespCookie = Headers '[ Header "Set-Cookie" SetCookie
+                                  , Header "Set-Cookie" SetCookie
+                                  ] NoContent
 
 -- | Type representation for routes that do not require authentication.
 type UnprotectedAPI =
@@ -58,4 +58,4 @@ unprotected = login
 
 -- | Registration endpoint, protected by the authentication handlier.
 login :: UserApiLoginJson -> AppStackM UserApiRespJson
-login = undefined
+login = error "Route not implemented"
