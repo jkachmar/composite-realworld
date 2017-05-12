@@ -6,9 +6,10 @@
 module App where
 
 import           ClassyPrelude              hiding (Handler, keys)
+import           Configuration.Dotenv       (loadFile, onMissingFile)
 import           Control.Monad.Logger       (askLoggerIO, logInfo)
 import           Control.Monad.Trans.Maybe  (MaybeT (MaybeT), runMaybeT)
-import           Crypto.JOSE.JWK
+import           Crypto.JOSE.JWK            (JWK, fromRSA)
 import qualified Data.ByteString.Char8      as BS
 import           Data.Pool                  (Pool)
 import qualified Data.Pool                  as Pool
@@ -33,31 +34,40 @@ import           Logger                     (LogFunction, withLogger,
 -- | Initialize the application and serve the API.
 startApp :: IO ()
 startApp = do
+  onMissingFile (loadFile False "./.env") (pure ())
+  -- Load environment variables present in a `.env` file; ignore missing file
+
   env <- lookupSetting "ENV" DEV
+  -- Get the app environment (i.e. either @DEV@, @TEST@, @PROD@)
 
   port <- lookupSetting "APP_PORT" 8080
   -- Get the specified application port, default to 8080 if "APP_PORT" not present
 
-  connStr <- getConnStr
-  -- Build a connection string from env vars, throw IO failure if env vars not present
+  connStr <- getConnStr env
+  -- Build the appropriate connection string for the environment; for @PROD@, if
+  -- any env vars are missing this throws an IO error
 
   nConns <- lookupSetting "DB_CONNS" 5
   -- Get the specified number of DB connections, default to 5 if "DB_CONNS" not present
 
-  rsaKey <- lookupSetting "RSA_KEY" (throwIO $ userError "'KEYPATH' environment variable not set!")
-  jwtCfg <- defaultJWTSettings <$> mkJWK rsaKey
-  -- Generate JWTSettings from an RSA private keyfile
+  maybeKeyPath <- lookupEnv "KEYPATH"
+  rsaKeyPath   <- maybe (throwIO $ userError "'KEYPATH' not present in environment!") pure maybeKeyPath
+  -- Loads the RSA keypath into memory; throws an error if the env var is missing
+
+  jwtCfg <- defaultJWTSettings <$> mkJWK rsaKeyPath
+  -- Generate JWTSettings from an RSA private keyfile; throws an error if the file is missing
 
   withLogger $ do
     withDbConnPool connStr nConns $ \ connPool -> do
       logFn <- askLoggerIO
       let config    = Config connPool jwtCfg
-          reqLogger = setLoggingMiddleware env
+          reqLogger = setLoggingMiddleware env -- WAI request logging middleware
           service   = enter (appStackToHandler config logFn) server
+          -- The @Servant@ handler for this application
 
       $logInfo $ "Starting server on port " <> tshow port
 
-      liftIO . run port . reqLogger . serve api $ service
+      liftIO . run port . reqLogger . serve api $ service -- Get this party started
 
 --------------------------------------------------------------------------------
 
@@ -119,8 +129,10 @@ withDbConnPool connStr nConns action = do
 
 -- | Make a @ConnString@ from environment variables, throwing an error if any
 -- cannot be found.
-getConnStr :: IO ConnStr
-getConnStr = do
+getConnStr :: Environment -> IO ConnStr
+getConnStr DEV = pure $ ConnStr "host=localhost port=5432 user=jkachmar password= dbname=crw"
+getConnStr TEST = pure $ ConnStr "host=localhost port=5432 user=test password= dbname=crw-test"
+getConnStr PROD = do
   connStr <- runMaybeT $ do
     let keys = [ "host="
                , " port="

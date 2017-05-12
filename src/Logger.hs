@@ -51,6 +51,6 @@ logMsg :: LogFunction
 logMsg loc _ level msg = do
   dateLogStr <- nowLogString
   let logStr = dateLogStr
-        <> " [" <> (toLogStr . show) level <> "]"
+        <> " [" <> (toLogStr . show) level <> "] "
         <> msg <> " @(" <> locLogString loc <> ")"
   (hPutStrLn stderr . fromLogStr) logStr

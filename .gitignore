@@ -4,3 +4,4 @@
 /.stack-work/
 /resources/keys/*
 !/resources/keys/.gitkeep
+.env
