@@ -13,7 +13,7 @@ import           Crypto.JOSE.JWK
 import qualified Data.ByteString.Char8      as BS
 import           Data.Pool                  (Pool)
 import qualified Data.Pool                  as Pool
-import           Data.X509                  (PrivKey (PrivKeyRSA, PrivKeyDSA))
+import           Data.X509                  (PrivKey (PrivKeyDSA, PrivKeyRSA))
 import           Data.X509.File             (readKeyFile)
 import           Database.PostgreSQL.Simple (Connection, close,
                                              connectPostgreSQL)
@@ -23,7 +23,9 @@ import           Servant.Auth.Server        (defaultJWTSettings)
 import           System.Environment         (lookupEnv)
 
 import           Api                        (api, server)
-import           Foundation                 (AppStackM, Config (Config))
+import           Foundation                 (AppStackM, Config (Config),
+                                             Environment (..),
+                                             setLoggingMiddleware)
 import           Logger                     (LogFunction, withLogger,
                                              withLoggingFn)
 
@@ -35,6 +37,8 @@ startApp = do
   loadFile False ".env"
   -- Load settings from a ".env" file, if present; do not override existing env vars
 
+  env <- lookupSetting "ENV" DEV
+
   port <- lookupSetting "APP_PORT" 8080
   -- Get the specified application port, default to 8080 if "APP_PORT" not present
 
@@ -45,16 +49,19 @@ startApp = do
   -- Get the specified number of DB connections, default to 5 if "DB_CONNS" not present
 
   rsaKey <- lookupSetting "RSA_KEY" (throwIO $ userError "'KEYPATH' environment variable not set!")
-  jwk <- mkJWK rsaKey
-  let jwtCfg = defaultJWTSettings jwk
-  -- Generate @JWTSettings@ from an RSA private keyfile
+  jwtCfg <- defaultJWTSettings <$> mkJWK rsaKey
+  -- Generate JWTSettings from an RSA private keyfile
 
   withLogger $ do
     withDbConnPool connStr nConns $ \ connPool -> do
-      let config = Config connPool jwtCfg
       logFn <- askLoggerIO
+      let config    = Config connPool jwtCfg
+          reqLogger = setLoggingMiddleware env
+          service   = enter (appStackToHandler config logFn) server
+
       $logInfo $ "Starting server on port " <> tshow port
-      liftIO . run port . serve api $ enter (appStackToHandler config logFn) server
+
+      liftIO . run port . reqLogger . serve api $ service
 
 --------------------------------------------------------------------------------
 

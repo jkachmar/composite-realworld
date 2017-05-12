@@ -2,12 +2,17 @@
 
 module Foundation where
 
-import           ClassyPrelude              hiding (Handler)
-import           Control.Monad.Logger       (LoggingT)
-import           Data.Pool                  (Pool, withResource)
-import           Database.PostgreSQL.Simple (Connection, withTransaction)
-import           Servant                    (Handler)
-import           Servant.Auth.Server        (JWTSettings)
+import           ClassyPrelude                        hiding (Handler)
+import           Control.Monad.Logger                 (LoggingT)
+import           Data.Pool                            (Pool, withResource)
+import           Database.PostgreSQL.Simple           (Connection,
+                                                       withTransaction)
+import           Network.Wai                          (Middleware)
+import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
+import           Servant                              (Handler)
+import           Servant.Auth.Server                  (JWTSettings)
+
+--------------------------------------------------------------------------------
 
 -- | An alias for the monadic context in which all requests are handled;
 -- @LoggingT@ provides access to the logging context, and @ReaderT Config@
@@ -55,3 +60,14 @@ withDbTransactionConn pool action =
     withTransaction conn (action conn)
 
 --------------------------------------------------------------------------------
+
+data Environment
+  = DEV
+  | TEST
+  | PROD
+  deriving (Eq, Read, Show)
+
+setLoggingMiddleware :: Environment -> Middleware
+setLoggingMiddleware TEST = id
+setLoggingMiddleware DEV  = logStdoutDev
+setLoggingMiddleware PROD = logStdout
