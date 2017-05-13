@@ -39,7 +39,6 @@ withOpticsAndProxies [d|
   type FUserEmail    = "email" :-> Text
   type CUserEmail    = "email" :-> Column PGText
   type FUserEmailMay = "email" :-> Maybe Text
-  type CUserEmailMay = "email" :-> Maybe (Column PGText)
   -- ^ User email address.
 
   type FUserName    = "username" :-> Text
@@ -50,7 +49,7 @@ withOpticsAndProxies [d|
   type FUserPassword    = "password" :-> Text
   type CUserPassword    = "password" :-> Column PGText
   type FUserPasswordMay = "password" :-> Maybe Text
-  -- ^ User password, NOTE - ensure this is hashed before DB insertion.
+  -- ^ User password, NOTE - ensure this is hashed.
 
   type FUserBioMay = "bio" :-> Maybe Text
   type CUserBio    = "bio" :-> Column (Nullable PGText)
@@ -75,26 +74,19 @@ withOpticsAndProxies [d|
 --------------------------------------------------------------------------------
 
 -- | @Composite@ record of a 'User' login request.
-type UserApiLoginRec =
-  '[ FUserEmail
-   , FUserPassword
-   ]
+type UserLogin = '[FUserEmail , FUserPassword]
 
-makeRecJsonWrapper "UserApiLoginJson" ''UserApiLoginRec
-makeWrapped ''UserApiLoginJson
+makeRecJsonWrapper "UserLoginJson" ''UserLogin
+makeWrapped ''UserLoginJson
 
 -- | @Composite@ record of a 'User' registration request.
-type UserApiRegRec =
-  '[ FUserEmail
-   , FUserName
-   , FUserPassword
-   ]
+type UserRegister = '[FUserEmail , FUserName , FUserPassword]
 
-makeRecJsonWrapper "UserApiRegJson" ''UserApiRegRec
-makeWrapped ''UserApiRegJson
+makeRecJsonWrapper "UserRegisterJson" ''UserRegister
+makeWrapped ''UserRegisterJson
 
 -- | @Composite@ record of a 'User' update request.
-type UserApiUpdRec =
+type UserUpdate =
   '[ FUserEmailMay
    , FUserNameMay
    , FUserPasswordMay
@@ -102,11 +94,11 @@ type UserApiUpdRec =
    , FUserBioMay
    ]
 
-makeRecJsonWrapper "UserApiUpdJson" ''UserApiUpdRec
-makeWrapped ''UserApiUpdJson
+makeRecJsonWrapper "UserUpdateJson" ''UserUpdate
+makeWrapped ''UserUpdateJson
 
 -- | @Composite@ record of a 'User' response.
-type UserApiRespRec =
+type UserResponse =
   '[ FUserEmail
    , FUserToken
    , FUserName
@@ -114,16 +106,17 @@ type UserApiRespRec =
    , FUserImageMay
    ]
 
-makeRecJsonWrapper "UserApiRespJson" ''UserApiRespRec
-makeWrapped ''UserApiRespJson
+makeRecJsonWrapper "UserResponseJson" ''UserResponse
+makeWrapped ''UserResponseJson
 
 --------------------------------------------------------------------------------
 
 -- | Haskell-level 'User' database view representation.
-type UserViewRec =
+type UserView =
   '[ FUserId
    , FUserEmail
    , FUserName
+   , FUserPassword
    , FUserBioMay
    , FUserImageMay
    , FUserUUID
@@ -132,10 +125,11 @@ type UserViewRec =
    ]
 
 -- | Haskell-level 'User' database write representation.
-type UserWriteRec =
+type UserInsert =
   '[ FUserIdMay
    , FUserEmail
    , FUserName
+   , FUserPassword
    , FUserBioMay
    , FUserImageMay
    , FUserUUIDMay
@@ -150,6 +144,7 @@ type UserViewCols =
   '[ CUserId
    , CUserEmail
    , CUserName
+   , CUserPassword
    , CUserBio
    , CUserImage
    , CUserUUID
@@ -157,11 +152,12 @@ type UserViewCols =
    , CUpdatedAt
    ]
 
--- | Postgres-level 'User' database write representation.
-type UserWriteCols =
+-- | Postgres-level 'User' database insert representation.
+type UserInsertCols =
   '[ CUserIdMay
    , CUserEmail
    , CUserName
+   , CUserPassword
    , CUserBioMay
    , CUserImageMay
    , CUserUUIDMay
@@ -172,9 +168,9 @@ type UserWriteCols =
 --------------------------------------------------------------------------------
 
 -- | Opaleye "users" @Table@.
-userTbl :: Table (Record UserWriteCols) (Record UserViewCols)
-userTbl = Table "users" defaultRecTable
+userTable :: Table (Record UserInsertCols) (Record UserViewCols)
+userTable = Table "users" defaultRecTable
 
 -- | @QueryArr@ selecting from the "users" table.
-userQ :: QueryArr () (Record UserViewCols)
-userQ = queryTable userTbl
+userQuery :: QueryArr () (Record UserViewCols)
+userQuery = queryTable userTable

@@ -10,7 +10,7 @@ import           Servant.Auth.Server (FromJWT, ToJWT)
 
 -------------------------------------------------------------------------------
 
-newtype UserId = UserId { userId :: UUID } deriving (Eq, Read, Show)
+newtype UserId = UserId { unUserId :: UUID } deriving (Eq, Read, Show)
 
 instance FromJSON UserId where
   parseJSON = withObject "user authentication JWT" $ \o -> do

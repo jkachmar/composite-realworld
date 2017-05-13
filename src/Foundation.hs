@@ -23,8 +23,8 @@ type AppStackM = ReaderT Config (LoggingT Handler)
 -- now, this only contains our database connection pool, and JWT settings).
 data Config
   = Config
-  { getPool :: Pool Connection
-  , getJWT  :: JWTSettings
+  { getConnPool    :: Pool Connection
+  , getJWTSettings :: JWTSettings
   }
 
 --------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ data Config
 withDb :: (MonadBaseControl IO m, MonadReader Config m)
        => (Connection -> IO a) -> m a
 withDb action = do
-  pool <- asks getPool
+  pool <- asks getConnPool
   withDbConn pool action
 
 -- | Execute a database action within a context compatible with @AppStackM@ and
@@ -41,7 +41,7 @@ withDb action = do
 withDbTransaction :: (MonadBaseControl IO m, MonadReader Config m)
                   => (Connection -> IO a) -> m a
 withDbTransaction action = do
-  pool <- asks getPool
+  pool <- asks getConnPool
   withDbTransactionConn pool action
 
 -- | Execute a database action with a database connection taken from the pool.
