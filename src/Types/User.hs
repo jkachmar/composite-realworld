@@ -51,14 +51,12 @@ withOpticsAndProxies [d|
   type FUserPasswordMay = "password" :-> Maybe Text
   -- ^ User password, NOTE - ensure this is hashed.
 
-  type FUserBioMay = "bio" :-> Maybe Text
-  type CUserBio    = "bio" :-> Column (Nullable PGText)
-  type CUserBioMay = "bio" :-> Maybe (Column (Nullable PGText))
+  type FUserBioMay  = "bio" :-> Maybe Text
+  type CUserBioNull = "bio" :-> Column (Nullable PGText)
   -- ^ User bio text, nullable, defaults to a NULL value.
 
-  type FUserImageMay = "image" :-> Maybe Text
-  type CUserImage    = "image" :-> Column (Nullable PGText)
-  type CUserImageMay = "image" :-> Maybe (Column (Nullable PGText))
+  type FUserImageMay  = "image" :-> Maybe Text
+  type CUserImageNull = "image" :-> Column (Nullable PGText)
   -- ^ User image URL, nullable, defaults to a NULL value.
 
   type FUserUUID    = "uuid" :-> UUID
@@ -124,6 +122,21 @@ type UserView =
    , FUpdatedAt
    ]
 
+-- | Postgres-level 'User' database view representation.
+type UserViewCols =
+  '[ CUserId
+   , CUserEmail
+   , CUserName
+   , CUserPassword
+   , CUserBioNull
+   , CUserImageNull
+   , CUserUUID
+   , CCreatedAt
+   , CUpdatedAt
+   ]
+
+--------------------------------------------------------------------------------
+
 -- | Haskell-level 'User' database write representation.
 type UserInsert =
   '[ FUserIdMay
@@ -137,29 +150,14 @@ type UserInsert =
    , FUpdatedAtMay
    ]
 
---------------------------------------------------------------------------------
-
--- | Postgres-level 'User' database view representation.
-type UserViewCols =
-  '[ CUserId
-   , CUserEmail
-   , CUserName
-   , CUserPassword
-   , CUserBio
-   , CUserImage
-   , CUserUUID
-   , CCreatedAt
-   , CUpdatedAt
-   ]
-
 -- | Postgres-level 'User' database insert representation.
 type UserInsertCols =
   '[ CUserIdMay
    , CUserEmail
    , CUserName
    , CUserPassword
-   , CUserBioMay
-   , CUserImageMay
+   , CUserBioNull
+   , CUserImageNull
    , CUserUUIDMay
    , CCreatedAtMay
    , CUpdatedAtMay

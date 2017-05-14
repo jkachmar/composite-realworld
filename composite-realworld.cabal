@@ -17,7 +17,7 @@ cabal-version:       >= 1.10
 
 library
   default-language: Haskell2010
-  ghc-options: -Wall
+  ghc-options: -Wall -Werror
   hs-source-dirs:
       src
   default-extensions: NoImplicitPrelude OverloadedStrings
@@ -31,6 +31,7 @@ library
       App
       Foundation
       Logger
+      Query.User
       Types
       Types.Article
       Types.Auth
@@ -48,6 +49,7 @@ library
     , composite-aeson
     , composite-base
     , composite-opaleye
+    , containers          >= 0.5  && < 0.6
     , cryptonite
     , dotenv
     , errors              >= 2.1  && < 2.2
@@ -61,6 +63,7 @@ library
     , product-profunctors >= 0.7  && < 0.8
     , profunctors         >= 5.2  && < 5.3
     , resource-pool       >= 0.2  && < 0.3
+    , refurb
     , servant
     , servant-auth
     , servant-auth-server
@@ -69,7 +72,6 @@ library
     , time                >= 1.6  && < 1.7
     , text                >= 1.2  && < 1.3
     , uuid                >= 1.3  && < 1.4
-    , vinyl
     , wai                 >= 3.2  && < 3.3
     , wai-extra           >= 3.0  && < 3.1
     , warp                >= 3.2  && < 3.3
@@ -81,7 +83,7 @@ executable composite-realworld-exe
   hs-source-dirs:
       app
   default-extensions: NoImplicitPrelude OverloadedStrings
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson               >= 1.0  && < 1.1
     , base                >= 4.7  && < 5
@@ -90,6 +92,7 @@ executable composite-realworld-exe
     , composite-aeson
     , composite-base
     , composite-opaleye
+    , containers          >= 0.5  && < 0.6
     , cryptonite
     , dotenv
     , errors              >= 2.1  && < 2.2
@@ -103,6 +106,7 @@ executable composite-realworld-exe
     , product-profunctors >= 0.7  && < 0.8
     , profunctors         >= 5.2  && < 5.3
     , resource-pool       >= 0.2  && < 0.3
+    , refurb
     , servant
     , servant-auth
     , servant-auth-server
@@ -111,7 +115,6 @@ executable composite-realworld-exe
     , time                >= 1.6  && < 1.7
     , text                >= 1.2  && < 1.3
     , uuid                >= 1.3  && < 1.4
-    , vinyl
     , wai                 >= 3.2  && < 3.3
     , wai-extra           >= 3.0  && < 3.1
     , warp                >= 3.2  && < 3.3
