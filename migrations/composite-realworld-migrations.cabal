@@ -20,10 +20,13 @@ executable migrate
   default-extensions: NoImplicitPrelude OverloadedStrings
   build-depends:
       base              >= 4.7 && < 5
-    , classy-prelude    >= 1.2  && < 1.3
-    , containers        >= 0.5  && < 0.6
+    , classy-prelude    >= 1.2 && < 1.3
+    , containers        >= 0.5 && < 0.6
+    , cryptonite
     , dotenv
-    , postgresql-simple >= 0.5  && < 0.6
+    , postgresql-simple >= 0.5 && < 0.6
     , refurb
-    , text                >= 1.2  && < 1.3
+    , text              >= 1.2 && < 1.3
+  other-modules:
+      BCrypt
   default-language: Haskell2010

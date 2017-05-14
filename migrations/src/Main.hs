@@ -13,10 +13,13 @@ import           Prelude                    (read)
 import           Configuration.Dotenv       (onMissingFile, parseFile)
 import           Data.Map.Strict            (fromList, lookup)
 import           Data.Text                  (pack, unpack)
-import           Database.PostgreSQL.Simple ()
+import           Database.PostgreSQL.Simple (Only (Only))
 import           Refurb                     (ConnInfo (..), Migration,
-                                             MonadMigration, execute_, qqSql,
-                                             refurbMain, schemaMigration)
+                                             MonadMigration, executeMany,
+                                             execute_, qqSql, refurbMain,
+                                             schemaMigration, seedDataMigration)
+
+import           BCrypt
 
 --------------------------------------------------------------------------------
 
@@ -30,9 +33,11 @@ main =
 
 loadConfig :: FilePath -> IO ConnInfo
 loadConfig configFile = do
+  envs <- onMissingFile
+          (parseFile configFile)
+          (throwIO $ userError "Config file not present!")
 
-  envs <- fromList <$> parseFile configFile
-  case (getConnInfo envs) of
+  case (getConnInfo (fromList envs)) of
     Nothing       -> throwIO $ userError "Unable to read connection info!"
     Just connInfo -> pure connInfo
 
@@ -50,7 +55,8 @@ loadConfig configFile = do
 
 migrations :: [Migration]
 migrations =
-  [ schemaMigration "public" "create-users-table"    createUsersTable
+  [ schemaMigration   "public" "create-users-table" createUsersTable
+  , seedDataMigration "public" "seed-admin-user"    seedAdminUser
   ]
 
 --------------------------------------------------------------------------------
@@ -72,3 +78,16 @@ createUsersTable =
             );
         |]
   in void $ execute_ createUsersTblQ
+
+seedAdminUser :: MonadMigration m => m ()
+seedAdminUser = do
+  let seedAdminUserQ =
+        "INSERT INTO public.users (email, username, password) VALUES (?,?,?)"
+
+      userEmail = asText $ "admin@crw.com"
+      userName  = asText $ "Alice Roberts"
+      userPass  = asText $ "guest123"
+
+  hashedPass <- unBCrypt <$> (liftBase $ hashPassword userPass)
+
+  void $ executeMany seedAdminUserQ [(userEmail, userName, hashedPass)]

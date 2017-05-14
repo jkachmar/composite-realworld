@@ -4,6 +4,7 @@ packages:
 - '.'
 
 extra-deps:
+  - cryptonite-0.23
   - composite-base-0.4.1.0
   - composite-opaleye-0.4.1.0
   - dotenv-0.3.2.0
