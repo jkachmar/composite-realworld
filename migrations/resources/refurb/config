@@ -1,0 +1,5 @@
+PGHOST="localhost"
+PGPORT=5432
+PGUSER="crw_user"
+PGPASS=""
+PGDATABASE="crw_db"

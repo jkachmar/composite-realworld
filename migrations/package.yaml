@@ -1,0 +1,25 @@
+name:                composite-realworld-migrations
+synopsis:            Migrations for composite-realworld implemented in refurb
+description:         Database migrations for composit-realworld, handled with refurb
+license:             MIT
+author:              jkachmar
+copyright:           2017 Joe Kachmar
+category:            Web
+
+default-extensions:
+  - NoImplicitPrelude
+  - OverloadedStrings
+
+dependencies:
+  - base              >= 4.7 && < 5
+  - classy-prelude    >= 1.2  && < 1.3
+  - containers        >= 0.5  && < 0.6
+  - dotenv            # version pinned by stack.yaml
+  - postgresql-simple >= 0.5  && < 0.6
+  - refurb            # version pinned by stack.yaml
+  - text                >= 1.2  && < 1.3
+
+executables:
+  migrate:
+    source-dirs:      src
+    main:             Main.hs
