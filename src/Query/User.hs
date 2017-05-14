@@ -12,7 +12,7 @@ import           Data.Maybe    (listToMaybe)
 import           Composite     (Record)
 import           Control.Arrow (returnA)
 import           Opaleye       (limit, restrict,
-                                runInsertManyReturning, runQuery, (./=))
+                                runInsertManyReturning, runQuery, (.==))
 import qualified Opaleye as O
 
 import           Foundation    (Config, withDbTransaction)
@@ -31,7 +31,7 @@ loginQuery userLogin = do
   (fmap . fmap) listToMaybe withDbTransaction $ \conn ->
     runQuery conn . (limit 1) $ proc () -> do
       user@(view cUserEmail -> userEmail) <- userQuery -< ()
-      restrict -< userEmail ./= O.constant (userLogin^.fUserEmail)
+      restrict -< userEmail .== O.constant (userLogin^.fUserEmail)
       returnA -< user
 
 -- | Insert a user into the database, returning the inserted record

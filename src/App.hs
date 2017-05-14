@@ -18,8 +18,9 @@ import           Data.X509.File             (readKeyFile)
 import           Database.PostgreSQL.Simple (Connection, close,
                                              connectPostgreSQL)
 import           Network.Wai.Handler.Warp   (run)
-import           Servant                    ((:~>) (NT), Handler, enter, serve)
-import           Servant.Auth.Server        (defaultJWTSettings)
+-- import           Servant                    ((:~>) (NT), Handler, enter, serve, Context(EmptyContext))
+import Servant 
+import           Servant.Auth.Server        (defaultJWTSettings, defaultCookieSettings)
 import           System.Environment         (lookupEnv)
 
 import           Api                        (api, server)
@@ -61,13 +62,15 @@ startApp = do
     withDbConnPool connStr nConns $ \ connPool -> do
       logFn <- askLoggerIO
       let config    = Config connPool jwtCfg
+          authCfg   = defaultCookieSettings :. jwtCfg :. EmptyContext
           reqLogger = setLoggingMiddleware env -- WAI request logging middleware
           service   = enter (appStackToHandler config logFn) server
           -- The @Servant@ handler for this application
 
       $logInfo $ "Starting server on port " <> tshow port
 
-      liftIO . run port . reqLogger . serve api $ service -- Get this party started
+      liftIO . run port . reqLogger . serveWithContext api authCfg $ service
+      -- Get this party started
 
 --------------------------------------------------------------------------------
 

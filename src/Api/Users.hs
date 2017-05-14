@@ -12,39 +12,45 @@ import           ClassyPrelude
 import           Control.Lens
 
 import           Composite.Record     (pattern (:*:), pattern RNil, Record)
-import           Control.Monad.Logger (logError)
+import           Control.Monad.Logger (logError, logInfo)
 import           Data.Time            (NominalDiffTime, addUTCTime)
 import           Servant              ((:<|>) ((:<|>)), (:>), JSON, Post,
-                                       ReqBody, ServerT, err401, err404, err500,
-                                       throwError)
+                                       Proxy (Proxy), ReqBody, ServerT, err401,
+                                       err404, err500, throwError)
 import           Servant.Auth.Server  (Auth, AuthResult (Authenticated),
-                                       makeJWT, throwAll)
+                                       throwAll)
 
 import           Foundation           (AppStackM, getJWTSettings)
 import           Query.User           (insertUser, loginQuery)
 import           Types.Auth           (JWTText (JWTText), Token (Token),
-                                       unJWTText)
+                                       makeJWT, unJWTText)
 import           Types.BCrypt         (BCrypt (BCrypt), hashPassword, unBCrypt,
                                        validatePassword)
 import           Types.User
 
+--------------------------------------------------------------------------------
+
 -- n.b. I don't really know the accepted style to write Servant types ¯\_(ツ)_/¯
 -- | Servant type-level representation of the "users" route fragment
-type UsersAPI auths = (Auth auths Token :> ProtectedAPI) :<|> UnprotectedAPI
+type UsersApi auths = (Auth auths Token :> ProtectedApi) :<|> UnprotectedApi
 
-usersServer :: ServerT (UsersAPI auths) AppStackM
+usersApi :: Proxy (UsersApi auths)
+usersApi = Proxy
+
+usersServer :: ServerT (UsersApi auths) AppStackM
 usersServer = protected :<|> unprotected
 
 --------------------------------------------------------------------------------
 
 -- | Type representation for routes that require authentication.
-type ProtectedAPI =
+type ProtectedApi =
        "users"
-         :> ReqBody '[JSON] UserRegisterJson
-           :> Post '[JSON] UserResponseJson
+         :> "register"
+           :> ReqBody '[JSON] UserRegisterJson
+             :> Post '[JSON] UserResponseJson
 
 -- | Endpoint dispatcher for protected routes, handles authentication.
-protected :: AuthResult Token -> ServerT ProtectedAPI AppStackM
+protected :: AuthResult Token -> ServerT ProtectedApi AppStackM
 protected (Authenticated token) = register token
 protected _                     = throwAll err401
 
@@ -94,22 +100,22 @@ type UserResponseCookie = Headers '[ Header "Set-Cookie" SetCookie
 -}
 
 -- | Type representation for routes that do not require authentication.
-type UnprotectedAPI =
+type UnprotectedApi =
        "users"
          :> "login"
            :> ReqBody '[JSON] UserLoginJson
              :> Post '[JSON] UserResponseJson
 
 -- | Endpoint dispatcher for unprotected routes.
-unprotected :: ServerT UnprotectedAPI AppStackM
+unprotected :: ServerT UnprotectedApi AppStackM
 unprotected = login
 
 -- | Login endpoint, unprotected by the authentication handler.
 login :: UserLoginJson -> AppStackM UserResponseJson
 login (UserLoginJson userLogin) = do
+
   -- Query the database for a user matching the given email address
   maybeUser <- loginQuery userLogin
-
   case maybeUser of
     -- If no user was found, throw a 404
     Nothing -> throwError err404
@@ -128,6 +134,9 @@ login (UserLoginJson userLogin) = do
 mkToken :: Text -> Record UserView -> AppStackM Token
 mkToken password user = do
   -- Validate the stored hash against the plaintext password
+  hashed <- hashPassword password
+  $logInfo $ unBCrypt hashed
+  $logInfo $ user^.fUserPassword
   isValid <-
     validatePassword
     (BCrypt $ user^.fUserPassword)
@@ -141,8 +150,8 @@ mkToken password user = do
 -- of seconds
 mkJWT :: Token -> NominalDiffTime -> AppStackM JWTText
 mkJWT token duration = do
-  -- Try to make a JWT with the settings in @ReaderT Config@, with an expiry
-  -- time 1 hour from now
+  -- Try to make a JWT with the settings from the Reader environment, with an
+  -- expiry time 1 hour from now
   settings <- asks getJWTSettings
   expires  <- liftBase $ Just . (addUTCTime duration) <$> getCurrentTime
   tryJWT   <- liftBase $ makeJWT token settings expires

@@ -4,20 +4,18 @@
 
 module Api where
 
-import           ClassyPrelude
-import           Control.Monad.Logger (logInfo)
-import           Data.Proxy           (Proxy (Proxy))
-import           Foundation           (AppStackM)
-import           Servant              ((:>), Get, JSON, ServerT)
+import           Foundation          (AppStackM)
+import           Servant             ((:>), Proxy (Proxy), ServerT)
+import           Servant.Auth.Server (JWT)
+
+import           Api.Users
 
 --------------------------------------------------------------------------------
 
-type API = "api" :> Get '[JSON] ()
+type Api auths = "api" :> (UsersApi auths)
 
-api :: Proxy API
+api :: Proxy (Api '[JWT])
 api = Proxy
 
-server :: ServerT API AppStackM
-server = do
-  $logInfo "thing happened"
-  pure ()
+server :: ServerT (Api auths) AppStackM
+server = usersServer

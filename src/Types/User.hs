@@ -9,21 +9,32 @@
 
 module Types.User where
 
+-- * Alternate Prelude
 import           ClassyPrelude
-import           Control.Lens.TH    (makeWrapped)
-import           Data.UUID          (UUID)
 
-import           Composite          ((:->), Record)
-import           Composite.Aeson.TH (makeRecJsonWrapper)
-import           Composite.Opaleye  (defaultRecTable)
-import           Composite.TH       (withOpticsAndProxies)
+-- * Composite ecosystem, and related, imports
+import           Composite              ((:->), Record)
+import           Composite.Aeson.Base   (JsonFormat, dimapJsonFormat,
+                                         parseJsonWithFormat', toJsonWithFormat)
+import           Composite.Aeson.Record (defaultJsonFormatRec, recJsonFormat)
+import           Composite.Opaleye      (defaultRecTable)
+import           Composite.TH           (withOpticsAndProxies)
+import           Data.Aeson             (FromJSON, ToJSON, object, parseJSON,
+                                         toJSON, withObject, (.:), (.=))
+import           Data.Aeson.Types       (Parser, Value)
+import           Data.Void              (Void)
 
-import           Opaleye            (Column, Nullable, PGInt8, PGText, PGUuid,
-                                     QueryArr, Table (Table), queryTable)
+-- * Opaleye, and related, imports
+import           Data.UUID              (UUID)
+import           Opaleye                (Column, Nullable, PGInt8, PGText,
+                                         PGUuid, QueryArr, Table (Table),
+                                         queryTable)
 
-import           Types.Common       (CCreatedAt, CCreatedAtMay, CUpdatedAt,
-                                     CUpdatedAtMay, FCreatedAt, FCreatedAtMay,
-                                     FUpdatedAt, FUpdatedAtMay)
+-- * Local module imports
+import           Types.Common           (CCreatedAt, CCreatedAtMay, CUpdatedAt,
+                                         CUpdatedAtMay, FCreatedAt,
+                                         FCreatedAtMay, FUpdatedAt,
+                                         FUpdatedAtMay)
 
 --------------------------------------------------------------------------------
 
@@ -71,19 +82,59 @@ withOpticsAndProxies [d|
 
 --------------------------------------------------------------------------------
 
--- | @Composite@ record of a 'User' login request.
+-- | Convenience function that wraps a @Composite@ JSON formatter in a single
+-- member "user" JSON object.
+wrapUserJson :: JsonFormat e a -> a -> Value
+wrapUserJson fmt v = object [ "user" .= (toJsonWithFormat fmt) v]
+
+-- | Convenience function that unwraps a singl a @Composite@ JSON parser in a single
+-- member "user" JSON object.
+unwrapUserJson :: JsonFormat Void a -> Value -> Parser a
+unwrapUserJson fmt =
+  withObject "User" (\o -> parseJsonWithFormat' fmt =<< o .: "user")
+
+--------------------------------------------------------------------------------
+-- | @Composite@ record of a 'User' login request and associated JSON parsing
+-- and formatting instances.
+
 type UserLogin = '[FUserEmail , FUserPassword]
+newtype UserLoginJson = UserLoginJson { unUserLoginJson :: Record UserLogin }
 
-makeRecJsonWrapper "UserLoginJson" ''UserLogin
-makeWrapped ''UserLoginJson
+userLoginJsonFormat :: JsonFormat e UserLoginJson
+userLoginJsonFormat =
+    dimapJsonFormat unUserLoginJson UserLoginJson $
+      recJsonFormat defaultJsonFormatRec
 
--- | @Composite@ record of a 'User' registration request.
+instance FromJSON UserLoginJson where
+  parseJSON = unwrapUserJson userLoginJsonFormat
+
+instance ToJSON UserLoginJson where
+  toJSON = wrapUserJson userLoginJsonFormat
+
+--------------------------------------------------------------------------------
+-- | @Composite@ record of a 'User' registration request and associated JSON
+-- parsing and formatting instances.
+
 type UserRegister = '[FUserEmail , FUserName , FUserPassword]
 
-makeRecJsonWrapper "UserRegisterJson" ''UserRegister
-makeWrapped ''UserRegisterJson
+newtype UserRegisterJson
+  = UserRegisterJson { unUserRegisterJson :: Record UserRegister }
 
--- | @Composite@ record of a 'User' update request.
+userRegisterJsonFormat :: JsonFormat e UserRegisterJson
+userRegisterJsonFormat =
+    dimapJsonFormat unUserRegisterJson UserRegisterJson $
+      recJsonFormat defaultJsonFormatRec
+
+instance FromJSON UserRegisterJson where
+  parseJSON = unwrapUserJson userRegisterJsonFormat
+
+instance ToJSON UserRegisterJson where
+  toJSON = wrapUserJson userRegisterJsonFormat
+
+--------------------------------------------------------------------------------
+-- | @Composite@ record of a 'User' update request and associated JSON parsing
+-- and formatting instances.
+
 type UserUpdate =
   '[ FUserEmailMay
    , FUserNameMay
@@ -92,10 +143,24 @@ type UserUpdate =
    , FUserBioMay
    ]
 
-makeRecJsonWrapper "UserUpdateJson" ''UserUpdate
-makeWrapped ''UserUpdateJson
+newtype UserUpdateJson
+  = UserUpdateJson { unUserUpdateJson :: Record UserUpdate }
 
--- | @Composite@ record of a 'User' response.
+userUpdateJsonFormat :: JsonFormat e UserUpdateJson
+userUpdateJsonFormat =
+    dimapJsonFormat unUserUpdateJson UserUpdateJson $
+      recJsonFormat defaultJsonFormatRec
+
+instance FromJSON UserUpdateJson where
+  parseJSON = unwrapUserJson userUpdateJsonFormat
+
+instance ToJSON UserUpdateJson where
+  toJSON = wrapUserJson userUpdateJsonFormat
+
+--------------------------------------------------------------------------------
+-- | @Composite@ record of a 'User' response and associated JSON parsing and
+-- formatting instances.
+
 type UserResponse =
   '[ FUserEmail
    , FUserToken
@@ -104,8 +169,19 @@ type UserResponse =
    , FUserImageMay
    ]
 
-makeRecJsonWrapper "UserResponseJson" ''UserResponse
-makeWrapped ''UserResponseJson
+newtype UserResponseJson
+  = UserResponseJson { unUserResponseJson :: Record UserResponse }
+
+userResponseJsonFormat :: JsonFormat e UserResponseJson
+userResponseJsonFormat =
+    dimapJsonFormat unUserResponseJson UserResponseJson $
+      recJsonFormat defaultJsonFormatRec
+
+instance FromJSON UserResponseJson where
+  parseJSON = unwrapUserJson userResponseJsonFormat
+
+instance ToJSON UserResponseJson where
+  toJSON = wrapUserJson userResponseJsonFormat
 
 --------------------------------------------------------------------------------
 
