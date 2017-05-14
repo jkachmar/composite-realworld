@@ -27,9 +27,9 @@ hashPassword pass = BCrypt . decodeUtf8 <$> hashPassword' pass
 -- provided @MonadLogger@ interface.
 validatePassword :: MonadLogger m => BCrypt -> Text -> m Bool
 validatePassword hash pass = do
-  let hash'   = encodeUtf8 . unBCrypt $ hash
-      pass'   = encodeUtf8 pass
-      isValid = BC.validatePasswordEither hash' pass'
+  let pass'   = encodeUtf8 pass
+      hash'   = encodeUtf8 . unBCrypt $ hash
+      isValid = BC.validatePasswordEither pass' hash'
 
   case isValid of
     Left err -> do
